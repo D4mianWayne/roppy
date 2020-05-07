@@ -9,7 +9,8 @@ from rop.asm.asm import Asm
 from rop.misc.pattern import Pattern
 from rop.loaders.elf import *
 from rop.loaders.ropper import *
-from rop.tubes.zio import *
+from rop.tubes.proc import *
+from rop.tubes.sock import *
 
 class FormatStr(object):
     def __init__(self, offset=0):

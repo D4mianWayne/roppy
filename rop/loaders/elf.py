@@ -13,7 +13,6 @@ from elftools.elf.sections import SymbolTableSection
 from termcolor import colored
 
 from ..asm.asm import *
-from ..tubes.zio import process
 from logging import getLogger
 from collections import namedtuple
 
@@ -127,6 +126,7 @@ class ELF(ELFFile):
         self.load_addr = self._address
 
 
+        print(colored("[*] ", "magenta", attrs=['bold']) + '{}'.format(self.path))
 
 
     def __repr__(self):

@@ -1,5 +1,4 @@
-from roppy import *
-import sys
+from pwn import *
 #p = process("/home/robin/Pwn/0x01/change_var", verbrose=False)
 
 #p.pause()
