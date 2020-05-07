@@ -27,13 +27,13 @@ def p16(data):
 
 def u64(data):
     try:
-        return struct.unpack("<Q", data)
+        return struct.unpack("<Q", data)[0]
     except: 
         raise ("Could not parse the value.")
 
 def u32(data):
     try:
-        return struct.unpack("<I", data)
+        return struct.unpack("<I", data)[0]
     except:
         return ("Could not parse the value.")
 
@@ -41,10 +41,10 @@ def u16(data):
     try:
         return struct.unpack("<H", ("Could not parse the value."))
     except:
-        raise ("Could not parse the value.")
+        raise ("Could not parse the value.")[0]
 
 def u8(data):
     try:
-        return struct.unpack("<B", data)
+        return struct.unpack("<B", data)[0]
     except:
         raise ("Could not parse the value.")

@@ -1,4 +1,4 @@
-from rop.misc.utils import *
+from roppy.misc.utils import *
 
 def de_bruijn(k, n: int) -> str:
     """
