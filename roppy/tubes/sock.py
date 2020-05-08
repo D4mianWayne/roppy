@@ -95,9 +95,8 @@ class remote(Tube):
             data = data.encode("latin")
         
         try:
-            self.proc.stdin.write(data)
-            self.proc.stdin.flush()
-        except (socket.timeout, ConnectionResetError):
+            self.conn.send(data)
+        except (socket.timeout, ConnectionResetError, BrokenPipeError):
             raise EOFError
     
     def close(self):

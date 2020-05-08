@@ -9,5 +9,6 @@ from roppy.misc.packing import *
 from roppy.loaders.elf import *
 from roppy.tubes.proc import *
 from roppy.tubes.sock import *
+from roppy.libformatstr import *
 
 

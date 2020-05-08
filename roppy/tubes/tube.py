@@ -241,7 +241,7 @@ class Tube(metaclass=ABCMeta):
         Interactive mode to interact with the
         running process.
         """
-        logger.info("Switching to Interaactive mode")
+        logger.info("Switching to Interactive mode")
         def thread_recv():
             while not flag.isSet():
                 try:
