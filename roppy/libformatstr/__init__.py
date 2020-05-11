@@ -4,4 +4,3 @@
 from .core import *
 from .pattern import *
 from .guess import *
-from .fmtemul import *

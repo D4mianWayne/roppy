@@ -7,5 +7,6 @@ from roppy.tubes.proc import *
 from roppy.tubes.sock import *
 from roppy.libformatstr import *
 from roppy.misc.args import *
+from roppy.rop.srop import SigreturnFrame
 
 
