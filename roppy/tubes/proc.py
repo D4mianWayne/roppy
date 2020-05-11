@@ -214,10 +214,12 @@ class process(Tube):
         return data
     
 
-    def send_raw(self, data):
+    def send_raw(self, data, timeout=None):
         # This is a slight hack. We try to notice if the process is
         # dead, so we can write a message.
+        self._settimeout(timeout)
         self._poll()
+
 
         if isinstance(data, str):
             data = data.encode("latin")

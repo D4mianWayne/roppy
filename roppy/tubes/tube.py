@@ -2,7 +2,7 @@ from abc import ABCMeta, abstractmethod
 import threading
 import time
 import sys
-from .buffer import Buffer
+from .buffer import Reservoir
 from termcolor import colored
 from ..log import *
 
@@ -13,7 +13,9 @@ from ..log import *
 class Tube(metaclass=ABCMeta):
 
     def __init__(self):
-        self.buffer = Buffer()
+
+        self.buffer = Reservoir()
+
     @abstractmethod
     def _settimeout(self, timeout):
         pass
@@ -78,6 +80,7 @@ class Tube(metaclass=ABCMeta):
         Receives one chunk from the internal buffer or from the OS if the
         buffer is empty.
         """
+
         # No buffered data, could not put anything in the buffer
         # before timeout.
         if not self.buffer and not self._fillbuffer(timeout):
@@ -175,7 +178,7 @@ class Tube(metaclass=ABCMeta):
         return data
 
     def send(self, data, timeout=None):
-        self.send_raw(data)
+        self.send_raw(data, timeout)
 
     def sendline(self, data, timeout=None):
         """Send a line

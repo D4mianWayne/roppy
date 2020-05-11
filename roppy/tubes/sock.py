@@ -1,15 +1,13 @@
 import socket
 from .tube import *
 from ..log import *
-from .buffer import Buffer
 
 class remote(Tube):
     def __init__(self, host, port, timeout=None):
+        super(remote, self).__init__()
         self.host = host
         self.port = port
         self.timeout = timeout
-
-        self.buffer = Buffer()
 
         self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -49,6 +47,7 @@ class remote(Tube):
         if len(data) == 0:
             return None
         
+
         return data
     
     def recvonce(self, size=4, timeout=None):
@@ -111,7 +110,7 @@ class remote(Tube):
             logger.error("Connection already has been closed.")
         
     
-    def shutdown(self):
+    def shutdown(self, target):
         if target in ['write', 'send', 'stdin']:
             self.conn.shutdown(socket.SHUT_WR)
         

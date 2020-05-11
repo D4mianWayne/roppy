@@ -38,11 +38,11 @@ class Asm(object):
             raise Exception("unsupported architecture: %r" % arch)
 
         with tempfile.NamedTemporaryFile(delete=False) as f:
-            p = Popen(cmd['as'] + [f.name], stdin=PIPE, stdout=PIPE, stderr=PIPE)
+            p = Popen(assembler['as'] + [f.name], stdin=PIPE, stdout=PIPE, stderr=PIPE)
             stdout, stderr = p.communicate(s + b'\n')
             if stderr:
                 return stderr
-            p = Popen(cmd['objdump'] + ['-w', f.name], stdout=PIPE)
+            p = Popen(assembler['objdump'] + ['-w', f.name], stdout=PIPE)
             stdout, stderr = p.communicate()
             result = b''.join(stdout.splitlines(True)[7:])
             os.remove(f.name)

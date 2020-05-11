@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 
-class Buffer(Exception):
+class Reservoir(Exception):
     """
     A Buffer class to work as a reservoir in order
     to store and help with the control flow of the
@@ -51,7 +51,7 @@ class Buffer(Exception):
         if not data:
             return
 
-        if isinstance(data, Buffer):
+        if isinstance(data, Reservoir):
             self.size += data.size
             self.data += data.data
         else:
@@ -62,7 +62,7 @@ class Buffer(Exception):
         """
         Places data at the front of the buffer.
         """
-        if isinstance(data, Buffer):
+        if isinstance(data, Reservoir):
             self.data = data.data + self.data
             self.size += data.size
         else:
