@@ -1,2 +1,2 @@
-from . import proc
-from . import sock
+from .sock import *
+from .proc import *

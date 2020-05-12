@@ -254,6 +254,7 @@ class Tube(metaclass=ABCMeta):
                 except EOFError:
                     logger.error("EOF while reading in Interactive.")
                     flag.set()
+                    break
                 time.sleep(0.1)
 
         flag = threading.Event()
