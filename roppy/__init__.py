@@ -3,10 +3,8 @@ from roppy.asm.assembler import Asm
 from roppy.misc.pattern import *
 from roppy.misc.packing import *
 from roppy.loaders.elf import *
-from roppy.tubes.proc import *
-from roppy.tubes.sock import *
+from roppy.tubes import *
 from roppy.libformatstr import *
-from roppy.misc.args import *
-from roppy.rop.srop import SigreturnFrame
+from roppy.rop import *
 
 

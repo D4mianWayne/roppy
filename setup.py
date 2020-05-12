@@ -20,7 +20,7 @@ setup(
     keywords='pwn rop fmtstr',
     packages=find_packages(exclude=['examples']),
     python_requires='!=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4',
-    install_requires=['pyelftools', 'requests'],
+    install_requires=['pyelftools', 'requests', 'capstone'],
     entry_points={  # Optional
         'console_scripts': [
             'roppy=roppy.__init__:main',
