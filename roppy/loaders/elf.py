@@ -12,7 +12,10 @@ class ELF:
     """
     def __init__(self, fpath, **args):
 
-        self.fpath = fpath
+        self.fpath = os.path.abspath(fpath)
+        if not os.path.exists(self.fpath):
+            logger.error("{} does not exists.".format(self.fpath))
+            return 
         
         self.__ELFFile              = ELFFile
         self.__symbolTableSection   = SymbolTableSection
