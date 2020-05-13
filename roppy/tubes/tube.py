@@ -8,8 +8,6 @@ from ..log import *
 
 
 
-
-
 class Tube(metaclass=ABCMeta):
 
     def __init__(self):
@@ -245,41 +243,42 @@ class Tube(metaclass=ABCMeta):
         running process.
         """
         logger.info("Switching to Interactive mode")
-        def thread_recv():
-            while not flag.isSet():
-                try:
-                    data = self.recv(timeout=0.1)
-                    if data is not None:
-                        print(data.decode("latin"), end="")
-                except EOFError:
-                    logger.error("EOF while reading in Interactive.")
-                    flag.set()
-                    break
-                time.sleep(0.1)
+        go = threading.Event()
 
-        flag = threading.Event()
-        th = threading.Thread(target=thread_recv)
-        th.setDaemon(True)
-        th.start()
+        def recv_thread():
+            while not go.is_set():
+                try:
+                    cur = self.recv(timeout=0.05)
+                    if cur:
+                        cur = cur.replace(b'\r\n', b'\n')
+                        sys.stdout.buffer.write(cur)
+                        sys.stdout.flush()
+                except EOFError:
+                    logger.info('Got EOF while reading in interactive')
+                    break
+
+        t = threading.Thread(target=recv_thread)
+        t.daemon = True
+        t.start()
 
         try:
-            while not flag.isSet():
-                prompt = colored("$ ", "cyan", attrs=["bold"])
-                data = input(prompt)
-                if self._socket() is None:
-                    logger.error("EOF while sending in Interactive.")
-                    flag.set()
-                if data is None:
-                    flag.set()
+            while not go.is_set():
+                print(colored("$ ", "cyan", attrs=['bold']), end='')
+                data = sys.stdin.readline()
+                if data:
+                    try:
+                        self.sendline(data)
+                    except EOFError:
+                        go.set()
+                        logger.info('Got EOF while sending in interactive')
                 else:
-                    self.sendline(data)
-                time.sleep(0.1)
+                    go.set()
         except KeyboardInterrupt:
-            flag.set()
+            logger.info('Interrupted')
+            go.set()
 
-        while th.is_alive():
-            th.join(timeout = 0.1)
-            time.sleep(0.1)
+        while t.is_alive():
+            t.join(timeout=0.1)
 
     @abstractmethod
     def close(self):

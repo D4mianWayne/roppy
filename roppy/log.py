@@ -19,11 +19,11 @@ class COLORS:
 class ColoredFormat(Formatter):
     def format(self, message):
         if message.levelno == INFO:
-            prefix = "[{0}{1}-{2}] ".format(COLORS.BOLD, COLORS.GREEN, COLORS.END)
+            prefix = "[{0}{1}*{2}] ".format(COLORS.BOLD, COLORS.GREEN, COLORS.END)
         if message.levelno == DEBUG:
             prefix = "[{0}{1}*{2}] ".format(COLORS.BOLD, COLORS.CYAN, COLORS.END)
         elif message.levelno >= ERROR:
-            prefix = "[{0}{1}*{2}] ".format(COLORS.BOLD, COLORS.RED, COLORS.END)
+            prefix = "[{0}{1}-{2}] ".format(COLORS.BOLD, COLORS.RED, COLORS.END)
         else:
             prefix = "[{0}{1}+{2}] ".format(COLORS.BOLD, COLORS.GREEN, COLORS.END)
         return prefix + super(ColoredFormat, self).format(message)

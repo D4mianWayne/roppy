@@ -2,12 +2,10 @@
 
 import socket
 import struct
-import random
-from requests import *
 from ..misc.utils import *
 # Retrieve shellcode
 
-class Shellcode(object):
+class shellcode(object):
     _database = {
         'i386': {
             'noppairs': ['AI', 'BJ', 'CK', 'FN', 'GO'],
@@ -119,41 +117,3 @@ class Shellcode(object):
                 return result
         else:
             raise Exception('xor key not found')
-
-def get_shellcode(keyword):
-	data = "http://shell-storm.org/api/?s={}*x86".format(keyword)
-	response = get(data, timeout=15)
-	if response.status_code == 200 and len(response.text) != 0:
-		parsed_data = parse_request(response)
-		for shellcodes in parsed_data:
-			colorout(shellcodes)
-		return '' # To disallow printing of None
-	else:
-		print(colored("[-] Nothing found!","red",attrs=["bold"]))
-		return '' # To disallow printing of None
-
-
-# Parse the response to print
-
-def parse_request(response):
-	all_data = []
-	for lines in response.iter_lines():
-		data = []
-		lines_data = lines.decode("utf-8").split("::::")
-		data.append(lines_data[3])
-		data.append(lines_data[1])
-		data.append(lines_data[2])
-		all_data.append(" - ".join(data))
-	return all_data
-
-def show_shellcode(id):
-	res = get("http://shell-storm.org/shellcode/files/shellcode-"+str(id)+".php")
-	if len(res.text) == 0:
-		return "Nothing found!"
-	res = res.text.split("<pre>")[1].split("<body>")[0]
-	res = res.replace("&quot;","\"")
-	res = res.replace("&lt;","<")
-	res = res.replace("&gt;",">")
-	res = res.replace("&amp;","&")
-	return res
-

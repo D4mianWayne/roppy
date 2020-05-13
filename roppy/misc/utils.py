@@ -17,7 +17,6 @@ def bytes2str(data):
     return data
 
 def pause():
-    input()
-    logger.info("Execution is paused.")
+    input("Paused [Press any key to continue]")
     return
 

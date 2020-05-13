@@ -113,26 +113,6 @@ class ELF:
         return symbol, function
         
 
-    def set_location(self, symbol, addr):
-        if not self.pie:
-            logger.error('ELF : "%s" is not PIE' % self.fpath)
-            return
-
-        if self.base:
-            logger.info('ELF : Base address is already set')
-
-        if symbol in self.__function:
-            self.base = addr - self.__function[symbol] 
-        elif symbol in self.__symbol:
-            self.base = addr - self.__symbol[symbol]
-        else:
-            logger.error('ELF : symbol "%s" not found' % symbol)
-            return
-        
-        logger.info('"%s" is loaded on 0x%08x' % (self.fpath, self.base))
-        if self.base & 0xfff:
-            logger.warn('ELF : Base address(%s) is maybe wrong' % self.fpath)
-
     def search(self, data, *section):
         if len(section):
             section = list(self.elf.get_section_by_name(k) for k in section)
@@ -147,12 +127,12 @@ class ELF:
 
     def section(self, name=None):
         if self.pie and not self.base:
-            logger.warn('ELF : Base address not set')
+            logger.warn('Base address not set')
             
         if name is None:
             return self.__section
         elif name not in self.__section:
-            logger.error('ELF : section "%s" not found' % name)
+            logger.error('Section "%s" not found' % name)
             return None
         
         return self.base + self.__section[name]
@@ -161,7 +141,7 @@ class ELF:
         if name is None:
             return self.__plt
         elif name not in self.__plt:
-            logger.error('ELF : plt "%s" not found' % name)
+            logger.error('PLT "%s" not found' % name)
             return None
         
         return self.base + self.__plt[name]
@@ -170,7 +150,7 @@ class ELF:
         if name is None:
             return self.__got
         elif name not in self.__got:
-            logger.error('ELF : got "%s" not found' % name)
+            logger.error('GOT "%s" not found' % name)
             return None
         
         return self.base + self.__got[name]
@@ -179,7 +159,7 @@ class ELF:
         if name is None:
             return self.__function
         elif name not in self.__function:
-            logger.error('ELF : function "%s" not found' % name)
+            logger.error('Function "%s" not found' % name)
             return None
         
         return self.base + self.__function[name]
@@ -188,7 +168,7 @@ class ELF:
         if name is None:
             return self.__symbol
         elif name not in self.__symbol:
-            logger.error('ELF : symbol "%s" not found' % name)
+            logger.error('Symbol "%s" not found' % name)
             return None
         
         return self.base + self.__symbol[name]

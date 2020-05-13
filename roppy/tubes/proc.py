@@ -127,20 +127,14 @@ class process(Tube):
         return self.proc
     
     def _poll(self):
-        if self.proc is None:
-            return self.close()
 
-        # Process polling 
         self.proc.poll()
-        rcode = self.proc.returncode
-        if rcode is not None:
-            logger.error(
-                "Process {0} stopped with exit code {1}. PID - {2}".format(
-                    self.fpath, rcode, self.proc.pid
-                )
-            )
-            self.proc = None
-        return rcode
+
+        if self.proc.returncode is not None:
+            logger.info("Program %r stopped with exit code %d" %
+                      (self.fpath, self.proc.returncode))
+
+        return self.proc.returncode
     
     def _is_alive(self):
         #  Checks if process is still alive or not.
@@ -179,6 +173,7 @@ class process(Tube):
         if not data:
             self.shutdown("recv")
             raise EOFError
+            exit(1)
 
         return data
 
@@ -227,7 +222,7 @@ class process(Tube):
         try:
             self.proc.stdin.write(data)
             self.proc.stdin.flush()
-        except (IOError, AttributeError):
+        except:
             raise EOFError
 
             
@@ -265,7 +260,4 @@ class process(Tube):
         
         else:
             logger.error("The specified target cannot not be closed.")
-        
-    
-    def __del__(self):
-        self.close()
+
