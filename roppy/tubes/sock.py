@@ -1,6 +1,5 @@
 import socket
 from .tube import *
-from ..log import *
 
 class remote(Tube):
     def __init__(self, host, port, timeout=None):
@@ -9,14 +8,16 @@ class remote(Tube):
         self.port = port
         self.timeout = timeout
 
+        log.info("Connecting to {0}:{1}".format(self.host, self.port))
+
         self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         try:
             self.conn.connect((self.host, self.port))
         except (ConnectionError, ConnectionRefusedError, socket.timeout):
-            logger.error("Unable to connect to {0} : {1}".format(self.host, self.port))
+            log.error("Unable to connect to {0}:{1}".format(self.host, self.port))
         
-        logger.info("Connected to {0} : {1}".format(self.host, self.port))
+        log.info("Connected to {0}:{1}".format(self.host, self.port))
 
     
     def _settimeout(self, timeout):
@@ -36,7 +37,7 @@ class remote(Tube):
         self._settimeout(timeout)
 
         if size <= 0:
-            logger.error("`size` value is: {0}, it must be greater than 0".format(size))
+            log.error("`size` value is: {0}, it must be greater than 0".format(size))
 
         data = b''
         try:
@@ -64,7 +65,7 @@ class remote(Tube):
         self._settimeout(timeout)
         data = b''
         if size <= 0:
-            logger.error("`size` must be larger than 0")
+            log.error("`size` must be larger than 0")
             return None
 
         read_byte = 0
@@ -74,7 +75,7 @@ class remote(Tube):
             if recv_data is None:
                 return None
             elif recv_data == b'':
-                logger.error("Received nothing")
+                log.info("Received nothing")
                 return None
             data += recv_data
             read_byte += len(data)
@@ -105,9 +106,9 @@ class remote(Tube):
 
         try:
             self.conn.close()
-            logger.info("Connection from {0}:{1}".format(self.host, self.port))
+            log.info("Connection from {0}:{1} has been closed.".format(self.host, self.port))
         except ConnectionError:
-            logger.error("Connection already has been closed.")
+            log.info("Connection already has been closed.")
         
     
     def shutdown(self, target):
@@ -118,7 +119,7 @@ class remote(Tube):
             self.conn.shutdown(socket.SHUT_RD)
         
         else:
-            logger.error("The specified option cannot not be closed.")
+            log.warn("The specified option cannot not be closed.")
     
     def __del__(self):
         self.close()

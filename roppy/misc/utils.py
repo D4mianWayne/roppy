@@ -1,5 +1,4 @@
 import binascii
-from ..log import *
 
 
 def checkstr(strings):

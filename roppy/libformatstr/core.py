@@ -3,7 +3,6 @@
 import sys
 import operator
 from collections import OrderedDict
-from ..log import *
 from ..misc.packing import *
 
 
@@ -265,7 +264,7 @@ class Byte:
 
 
 def warning(s):
-    logger.warn("Warning: "+s)
+    print("Warning: "+s)
 
 
 def tuples_sorted_by_values(adict):

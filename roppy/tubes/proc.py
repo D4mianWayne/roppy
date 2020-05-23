@@ -1,15 +1,13 @@
-import subprocess
-import sys
-import fcntl
+import logging
+from .tube import *
 import errno
 import select
+import fcntl
 import os
 import tty
 import pty
-from ..log import *
-from .tube import Tube
-
-
+import subprocess
+from roppy.log import log
 
 PIPE = subprocess.PIPE
 STDOUT = subprocess.STDOUT
@@ -23,7 +21,6 @@ class process(Tube):
         """
         Create a process instance and pipe 
         it for `Tube`
-
         Args:
             args (list): The arguments to pass
             env (list) : The environment variables
@@ -40,6 +37,7 @@ class process(Tube):
         self.timeout      = timeout
         self.cwd          = cwd
         self.raw          = raw
+        self.reservoir    = b''
         self.temp_timeout = None
         self.proc = None
 
@@ -63,7 +61,7 @@ class process(Tube):
             )
         
         except FileNotFoundError:
-            logger.warn("{} not found.".format(self.fpath))
+            log.error("{} not found.".format(self.fpath))
             return
         
         if self.pty is not None:
@@ -81,7 +79,7 @@ class process(Tube):
         fd = self.proc.stdout.fileno()
         fl = fcntl.fcntl(fd, fcntl.F_GETFL)
         fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
-        logger.info("Successfully started process. PID - {}".format(self.proc.pid))
+        log.info("Successfully started process. PID - {}".format(self.proc.pid))
     
     def _handles(self, stdin, stdout, stderr):
         master = slave = None
@@ -114,72 +112,47 @@ class process(Tube):
 
         return stdin, stdout, stderr, master, slave
 
-    
+
     def _settimeout(self, timeout):
-        # set timeout for interaction
         if timeout is None:
             self.temp_timeout = self.timeout
         else:
             self.temp_timeout = timeout
 
     def _socket(self):
-        # Returns the process instance itself
         return self.proc
-    
+
     def _poll(self):
+        if self.proc is None:
+            return False
 
         self.proc.poll()
+        returncode = self.proc.returncode
+        if returncode is not None:
+            log.info(
+                "Process '{}' stopped with exit code {} (PID={})".format(
+                    self.fpath, returncode, self.proc.pid
+                ))
+            self.proc = None
+        return returncode
 
-        if self.proc.returncode is not None:
-            logger.info("Program %r stopped with exit code %d" %
-                      (self.fpath, self.proc.returncode))
-
-        return self.proc.returncode
-    
     def _is_alive(self):
-        #  Checks if process is still alive or not.
         return self._poll() is None
 
     def _can_recv(self):
-        # Check if a process can recieve data or not.
-
         if self.proc is None:
             return False
-        
+
         try:
-            return select.select([self.proc.stdout], [], [], self.temp_timeout) == select.select([self.proc.stdout], [], [])
-        except select.error as e:
-            if e[0] == errno.EINTR:
+            return select.select([self.proc.stdout], [], [], self.temp_timeout) == ([self.proc.stdout], [], [])
+        except select.error as v:
+            if v[0] == errno.EINTR:
                 return False
-            
-    def recv_raw(self, numb, timeout):
-        # This is a slight hack. We try to notice if the process is
-        # dead, so we can write a message.
-        self._poll()
-        self._settimeout(timeout)
-        if not self._can_recv():
-            return b''
 
-        # This will only be reached if we either have data,
-        # or we have reached an EOF. In either case, it
-        # should be safe to read without expecting it to block.
-        data = b''
+    def recv(self, size=4096, timeout=None):
+        """Receive raw data
 
-        try:
-            data = self.proc.stdout.read(numb)
-        except IOError:
-            pass
-
-        if not data:
-            self.shutdown("recv")
-            raise EOFError
-            exit(1)
-
-        return data
-
-    def recvonce(self, size=4, timeout=None):
-        """
-        Recives data through pipe.
+        Receive raw data of maximum `size` bytes length through the pipe.
 
         Args:
             size    (int): The data size to receive
@@ -189,75 +162,71 @@ class process(Tube):
             bytes: The received data
         """
         self._settimeout(timeout)
-        data = b''
         if size <= 0:
-            logger.error("`size` must be larger than 0")
+            log.error("`size` must be larger than 0")
             return None
 
-        read_byte = 0
-        recv_size = size
-        while read_byte < size:
-            recv_data = self.recv_raw(recv_size, timeout)
-            if recv_data is None:
-                return None
-            elif recv_data == b'':
-                logger.error("Received nothing")
-                return None
-            data += recv_data
-            read_byte += len(data)
-            recv_size = size - read_byte
-        return data
-    
+        if not self._can_recv():
+            return b''
 
-    def send_raw(self, data, timeout=None):
-        # This is a slight hack. We try to notice if the process is
-        # dead, so we can write a message.
-        self._settimeout(timeout)
-        self._poll()
-
-
-        if isinstance(data, str):
-            data = data.encode("latin")
-        
+        data = b''
         try:
-            self.proc.stdin.write(data)
-            self.proc.stdin.flush()
+            data = self.proc.stdout.read(size)
+
         except:
             raise EOFError
 
-            
-    
-    def close(self):
-        """
-        Close the process instance
-        """
-        if self.proc is None:
-            return 
-        
-        self._poll()
 
-        if self.proc:
-            self.proc.kill()
-            self.proc.wait()
-            self.proc = None
-            logger.info("Closed process with PID: {}".format(self.proc.pid))
+        return data
 
-    
-    def shutdown(self, target):
-        """
-        Kill connection by closing the send/recv
-        Pipe communication
+    def send(self, data, timeout=None):
+        """Send raw data
+
+        Send raw data through the socket
 
         Args:
-            target (str): Connection to close (`send`, `recv`)
+            data (bytes) : Data to send
+            timeout (int): Timeout (in second)
         """
+        self._settimeout(timeout)
+        if isinstance(data, str):
+            data = str2bytes(data)
 
+        try:
+            self.proc.stdin.write(data)
+            self.proc.stdin.flush()
+        except IOError:
+            log.infos("Broken pipe")
+
+        return data
+
+    def close(self):
+        """Close the socket
+
+        Close the socket.
+        This method is called from the destructor.
+        """
+        if self.proc:
+            self.proc.kill()
+            self.proc = None
+            log.info("close: '{0}' killed".format(self.fpath))
+
+    def shutdown(self, target):
+        """Kill one connection
+
+        Close send/recv pipe.
+
+        Args:
+            target (str): Connection to close (`send` or `recv`)
+        """
         if target in ['write', 'send', 'stdin']:
             self.proc.stdin.close()
-        
+
         elif target in ['read', 'recv', 'stdout', 'stderr']:
             self.proc.stdout.close()
-        
-        else:
-            logger.error("The specified target cannot not be closed.")
 
+        else:
+            print("You must specify `send` or `recv` as target.")
+
+    def __del__(self):
+        self.close()
