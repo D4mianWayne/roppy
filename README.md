@@ -1,5 +1,11 @@
 # roppy
 
+
+# Warning:-
+
+It is in active development and is the only project and work I am doing during this lockdown so I must say, please do not use it for any pwning purpose until further update.
+
+
 A Pwning toolkit which allows you to interact with local process and network and lighten up your work during pwn. I made this in order to get the better understanding of python so that I could learn pwning more.
 
 ### Motivation
