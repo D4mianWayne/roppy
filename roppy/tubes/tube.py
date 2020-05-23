@@ -4,6 +4,7 @@ from abc import ABCMeta, abstractmethod
 import threading
 import time
 from logging import getLogger
+from roppy.log import log
 
 logger = getLogger(__name__)
 
@@ -190,7 +191,7 @@ class Tube(metaclass=ABCMeta):
         try:
             while not go.is_set():
                 time.sleep(0.05)
-                data = input("$ ")
+                data = input("\033[1m\033[36m$\033[0m ")
 
                 if data:
                     try:

@@ -32,22 +32,9 @@ class ColoredFormatter(Formatter):
 
         return prefix +  super(ColoredFormatter, self).format(record)
 
-class DeprecatedLog(object):
-    def __init__(self):
-        self.warn = False
-    
-    def dump(self, msg, level=''):
-        if not self.warn:
-            log.warning("`log.dump` is no longer available! Use `logger` instead")
-        self.warn = True
 
-# ptrlib root logger
 handler = StreamHandler()
 handler.setFormatter(ColoredFormatter("%(message)s"))
 log = getLogger(__name__)
 log.setLevel(INFO)
 log.addHandler(handler)
-
-# For compatibility
-log = DeprecatedLog()
-dump = log.dump
