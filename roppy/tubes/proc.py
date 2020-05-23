@@ -8,6 +8,7 @@ import tty
 import pty
 import subprocess
 from roppy.log import log
+from roppy.misc.utils import str2bytes
 
 PIPE = subprocess.PIPE
 STDOUT = subprocess.STDOUT
@@ -196,7 +197,7 @@ class process(Tube):
             self.proc.stdin.write(data)
             self.proc.stdin.flush()
         except IOError:
-            log.infos("Broken pipe")
+            log.info("Broken pipe")
 
         return data
 
