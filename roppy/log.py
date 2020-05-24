@@ -1,4 +1,4 @@
-from logging import getLogger, Formatter, StreamHandler, INFO, WARNING, ERROR
+from logging import getLogger, Formatter, StreamHandler, INFO, WARNING, ERROR, DEBUG
 
 
 class Color:
@@ -19,14 +19,21 @@ class Color:
     REVERCE   = '\033[07m'
 
 class ColoredFormatter(Formatter):
+    """
+    Formatter for log output
+    By importing the `roppy` with `from roppy import *`
+    `log` class can be access with the namespace `log` and 
+    that will help in printing the status or logs of process
+    during exploitation.
+    """
     def format(self, record):
         prefix = ''
         if record.levelno == INFO:
-            prefix = '{bold}{green}[+]{end} '.format(bold=Color.BOLD, green=Color.GREEN, end=Color.END)
+            prefix = '{bold}{green}[+]{end} '.format(bold=Color.BOLD, green=Color.BLUE, end=Color.END)
         if record.levelno == WARNING:
-            prefix = '{bold}{red}[+]{end} '.format(bold=Color.BOLD, red=Color.RED, end=Color.END)
+            prefix = '{bold}{red}[WARN]{end} '.format(bold=Color.BOLD, red=Color.WHITE, end=Color.END)
         elif record.levelno >= ERROR:
-            prefix = '{bold}{yellow}[WARN]{end} '.format(bold=Color.BOLD, yellow=Color.YELLOW, end=Color.END)
+            prefix = '{bold}{yellow}[-]{end} '.format(bold=Color.BOLD, yellow=Color.RED, end=Color.END)
         else:
             prefix = '{bold}[+]{end} '.format(bold=Color.BOLD, end=Color.END)
 

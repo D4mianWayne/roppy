@@ -1,45 +1,58 @@
 from elftools.elf.elffile import ELFFile
 from elftools.elf.sections import SymbolTableSection
+from elftools.elf.relocation import RelocationSection
+from elftools.elf.constants import SHN_INDICES
 import os
 from roppy.log import log
-
+import mmap
 
 class dotdict(dict):
     def __getattr__(self, name):
         return self[name]
 
-class ELF:
-    def __init__(self, path, mode='elftools', **args):
+class ELF(ELFFile):
+    """
+    `ELF` class encapsulates the `pyelftools.elf.elffile`
+     for providing a simplistic way to access the ELF file
+     symbols, sections, strings which saves the time for 
+     resolving the address.
+     """
+    def __init__(self, path):
         self.path = os.path.abspath(path)
-        self.__ELFFile              = ELFFile
-        self.__symbolTableSection   = SymbolTableSection
-        
-        self.initialize(args)
 
-    def initialize(self, args):
+        self.file    = open(self.path,'rb')
+        self.mmap = mmap.mmap(self.file.fileno(), 0, access=mmap.ACCESS_COPY)
+        super(ELF, self).__init__(self.mmap)
+        """ Encapsulates the `ELF` """
+        
+        self.initialize()
+
+    def initialize(self):
+        """
+        Initializing the ELF class by loading 
+        the information about of the sections, plt,
+        got and function addresses
+        """
         log.info("Analyzing {}".format(self.path))
 
-        self.elf    = self.__ELFFile(open(self.path,'rb'))
-
-        self.pie    = 'DYN' in self.elf.header.e_type
-        self.arch   = self.elf.get_machine_arch().lower()
+        self._pie    = 'DYN' in self.header.e_type
+        self.arch   = self.get_machine_arch().lower()
 
         
-        if self.pie:
+        if self._pie:
             self.base   = 0
         else:
-            self.base = min(filter(bool, (s.header.p_vaddr for s in self.elf.iter_segments())))
+            self.base = min(filter(bool, (s.header.p_vaddr for s in self.iter_segments())))
         
         self.__section                  = self.init_sections()
         self.__got                      = self.init_got()
         self.__plt                      = self.init_plt()
         self.__symbol, self.__function  = self.init_symbols()
-        
-        self.__list_gadgets             = self.init_ropgadget() if 'rop' in args and args['rop'] else None
 
     def init_sections(self):
+        """ Initializing sections of the ELF file """
         section = dict()
-        self.__list_sections = list(self.elf.iter_sections())
+        self.__list_sections = list(self.iter_sections())
             
         for sec in self.__list_sections:
             section[sec.name]  = sec.header.sh_addr
@@ -47,24 +60,36 @@ class ELF:
         return section
 
     def init_got(self):
+        """ Initializing the Global Offset Table """
+        addr_plt = self.get_section_by_name(".plt")
         got = dict()
-        name_rel_dyn = '.rel.dyn' if self.arch in ['x86', '80386'] else '.rela.dyn'
-        name_rel_plt = '.rel.plt' if self.arch in ['x86', '80386'] else '.rela.plt'
+        try:
+            rel_plt = next(s for s in self.__list_sections if
+                           s.header.sh_info == self.__list_sections.index(addr_plt) and
+                           isinstance(s, RelocationSection))
+        except StopIteration:
+            rel_plt = self.get_section_by_name('.rel.plt') or self.get_section_by_name('.rela.plt')
 
-        for name_rel in [name_rel_dyn, name_rel_plt]:               
-            sec_rel = self.elf.get_section_by_name(name_rel)
-            if sec_rel:
-                sym_rel = self.__list_sections[sec_rel.header.sh_link]
+        if not rel_plt:
+            log.warn("Couldn't find relocations against PLT to get symbols")
+            return
 
-                for rel in sec_rel.iter_relocations():
-                    sym_idx = rel.entry.r_info_sym
-                    sym     = sym_rel.get_symbol(sym_idx)
-                    got[sym.name]  = rel.entry.r_offset
+        if rel_plt.header.sh_link != SHN_INDICES.SHN_UNDEF:
+            # Find the symbols for the relocation section
+            sym_rel_plt = self.__list_sections[rel_plt.header.sh_link]
+
+            # Populate the GOT by iterating over the relocation section.
+            for rel in rel_plt.iter_relocations():
+                sym_idx = rel.entry.r_info_sym
+                symbol = sym_rel_plt.get_symbol(sym_idx)
+                name = symbol.name
+                got[name] = rel.entry.r_offset
                 
         return got
 
     def init_plt(self):
-        addr_plt = self.__section['.plt']
+        """ Initializing the Procedure Linkage Table """
+        addr_plt = self.get_section_by_name('.plt')
         if self.arch in ('x86','x64','amd64','80386','x86-64'):
             header_size, entry_size = 0x10, 0x10
 
@@ -73,21 +98,21 @@ class ELF:
         plt = {u'resolve' : sec_plt.header.sh_addr}
         addr_plt_entry = sec_plt.header.sh_addr + header_size
         '''
-        plt = {'resolve' : addr_plt}
-        addr_plt_entry = addr_plt + header_size
-        for name, addr in sorted(self.__got.items(), key=lambda x:x[1]):
-            plt[name] = addr_plt_entry
-            addr_plt_entry += entry_size
+        plt = {}
+        for i, (addr, name) in enumerate(sorted((addr, name)
+                                                for name, addr in self.__got.items())):
+            plt[name] = addr_plt.header.sh_addr + header_size + i * entry_size
 
         return plt
 
     
     def init_symbols(self):
+        """ Initializing the symbols from the ELF file """
         symbol      = dict()
         function    = dict()
 
         for sec in self.__list_sections:
-            if not isinstance(sec, self.__symbolTableSection):
+            if not isinstance(sec, SymbolTableSection):
                 continue
             
             for sym in sec.iter_symbols():
@@ -102,10 +127,12 @@ class ELF:
 
     @property
     def address(self):
+        """ Returns the base address of the ELF file """
         return self.base
 
     @address.setter
     def address(self, new):
+        """ Updates the address of an ELF file """
         delta = new - self.base
         update = lambda x: x + delta
 
@@ -119,6 +146,7 @@ class ELF:
     
 
     def search(self, data, *section):
+        """ Helps in searching string from the binary """
         if len(section):
             section = list(self.elf.get_section_by_name(k) for k in section)
         else:
@@ -132,6 +160,7 @@ class ELF:
         return None
 
     def section(self, name=None):
+        """ Returns the section address """
         if self.pie and not self.base:
             log.warn('ELF : Base address not set')
             
@@ -144,6 +173,7 @@ class ELF:
         return self.__section[name]
 
     def plt(self, name=None):
+        """ Returns the PLT address """
         if name is None:
             return self.__plt
         elif name not in self.__plt:
@@ -153,6 +183,7 @@ class ELF:
         return self.__plt[name]
 
     def got(self, name=None):
+        """ Returns the GOT address """
         if name is None:
             return self.__got
         elif name not in self.__got:
@@ -162,6 +193,7 @@ class ELF:
         return self.__got[name]
     
     def function(self, name=None):
+        """ Returns the function address """
         if name is None:
             return self.__function
         elif name not in self.__function:
@@ -171,6 +203,7 @@ class ELF:
         return self.__function[name]
 
     def symbol(self, name=None):
+        """ Returns the symbol address """
         if name is None:
             return self.__symbol
         elif name not in self.__symbol:
