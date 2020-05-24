@@ -192,7 +192,6 @@ class Tube(metaclass=ABCMeta):
             while not go.is_set():
                 time.sleep(0.05)
                 data = input("\033[1m\033[36m$\033[0m ")
-
                 if data:
                     try:
                         self.sendline(data)

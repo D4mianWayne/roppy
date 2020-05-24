@@ -1,1 +1,1 @@
-from . import assembler
+from roppy.assembler.Asm import *

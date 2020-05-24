@@ -82,7 +82,7 @@ class remote(Tube):
             recv_size = size - read_byte
         return data
     
-    def send_raw(self, data, timeout):
+    def send(self, data, timeout):
         """
         Send data via socket
         
@@ -109,7 +109,7 @@ class remote(Tube):
             log.info("Connection from {0}:{1} has been closed.".format(self.host, self.port))
         except ConnectionError:
             log.info("Connection already has been closed.")
-        
+
     
     def shutdown(self, target):
         if target in ['write', 'send', 'stdin']:
