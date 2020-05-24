@@ -1,68 +1,46 @@
-from subprocess import *
-import tempfile
-import os
+from roppy.misc.utils import str2bytes
+from keystone import *
+from capstone import *
 
 
-
-class Asm(object):
-    cmd = {
-        'i386': {
-            'as': ['as', '--32', '--msyntax=intel', '--mnaked-reg', '-o'],
-            'objdump': ['objdump', '-M', 'intel', '-d'],
-            'objdump_binary': ['objdump', '-b', 'binary', '-m', 'i386', '-M', 'intel,i386', '-D'],
+cmd = {
+       
+       'i386': {
+        "disasm": Cs(CS_ARCH_X86, CS_MODE_32),
+        "asm"   : Ks(KS_ARCH_X86, KS_MODE_32)
         },
+
         'x86-64': {
-            'as': ['as', '--64', '--msyntax=intel', '--mnaked-reg', '-o'],
-            'objdump': ['objdump', '-M', 'intel', '-d'],
-            'objdump_binary': ['objdump', '-b', 'binary', '-m', 'i386', '-M', 'intel,x86-64', '-D'],
-        },
-        'arm': {
-            'as': ['as', '-o'],
-            'objdump': ['objdump', '-d'],
-            'objdump_binary': ['objdump', '-b', 'binary', '-m', 'arm', '-D'],
-        },
-        'thumb': {
-            'as': ['as', '-mthumb', '-o'],
-            'objdump': ['objdump', '-M', 'force-thumb', '-d'],
-            'objdump_binary': ['objdump', '-b', 'binary', '-m', 'arm', '-M', 'force-thumb', '-D'],
-        },
+            "disasm" : Cs(CS_ARCH_X86, CS_MODE_64),
+            "asm"    : Ks(KS_ARCH_X86, KS_MODE_64)
+        }
     }
 
+def assemble(s, arch):
+    if arch in cmd:
+        assembler = cmd[arch]["asm"]
+    else:
+        raise Exception("unsupported architecture: %r" % arch)
+
+    if isinstance(s, str):
+        s = str2bytes(s)
+
+    encoding, count = assembler.asm(s)
+    res = b""
+    for ins in encoding:
+        res += bytes([ins])
+    return res
 
 
-    @classmethod
-    def asm(cls, s, arch):
-        if arch in cls.cmd:
-            assembler = cls.cmd[arch]
-        else:
-            raise Exception("unsupported architecture: %r" % arch)
-
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            p = Popen(assembler['as'] + [f.name], stdin=PIPE, stdout=PIPE, stderr=PIPE)
-            stdout, stderr = p.communicate(s + b'\n')
-            if stderr:
-                return stderr
-            p = Popen(assembler['objdump'] + ['-w', f.name], stdout=PIPE)
-            stdout, stderr = p.communicate()
-            result = b''.join(stdout.splitlines(True)[7:])
-            os.remove(f.name)
-            return result
 
 
-    @classmethod
-    def disasm(cls, blob, arch):
-        if arch in cls.cmd:
-            cmd = cls.cmd[arch]
-        else:
-            raise Exception("Unsupported Architecture: %r" % arch)
 
-        with tempfile.NamedTemporaryFile() as f:
-            f.write(blob)
-            f.flush()
-            if arch in ('arm', 'thumb'):
-                p = Popen(cmd['objdump_binary'] + ['-EB', '-w', f.name], stdout=PIPE)
-            else:
-                p = Popen(cmd['objdump_binary'] + ['-w', f.name], stdout=PIPE)
-            stdout, stderr = p.communicate()
-            result = b''.join(stdout.splitlines(True)[7:])
-            return result
+def disasm(blob, arch, vma=0x0):
+    if arch in cmd:
+        md = cmd[arch]["disasm"]
+    else:
+        raise Exception("Unsupported Architecture: %r" % arch)
+    res = ""
+    for i in md.disasm(blob, vma):
+        res += "0x%x:\t%s\t%s" %(i.address, i.mnemonic, i.op_str)
+    return res
