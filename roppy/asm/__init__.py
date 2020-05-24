@@ -1,1 +1,1 @@
-from roppy.assembler import *
+from .assembler import *
