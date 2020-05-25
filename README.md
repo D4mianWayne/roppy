@@ -1,19 +1,14 @@
 # roppy
 
 
-# Warning:-
-
-It is in active development and is the only project and work I am doing during this lockdown so I must say, please do not use it for any pwning purpose until further update.
+A Pwning toolkit which allows you to interact with local process and network and lighten up your work during pwn. I made this in order to get the better understanding of python so that I could learn pwning more and this is one of my best project so far.
 
 
-A Pwning toolkit which allows you to interact with local process and network and lighten up your work during pwn. I made this in order to get the better understanding of python so that I could learn pwning more.
+### Documentation
 
-### Motivation
+Although I'm working on do a documentation readthedocs but working alone on this project is very tiresome so I have to work 2x times of usual work and on the side work I have to learn about Pwning more.
 
-I always wanted to make something like this since I ever been into Pwning, it's not a complete toolkit for complex tasks I'll prefer pwntools by Gallposled.
-
-### Usage
-
+For the time being, the documentation can be found 
 
 ##### Importing `roppy`
 

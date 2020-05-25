@@ -1,5 +1,5 @@
 # coding: utf-8
-from ..misc import *
+from roppy.misc import *
 from abc import ABCMeta, abstractmethod
 import threading
 import time
@@ -10,6 +10,7 @@ logger = getLogger(__name__)
 
 class Tube(metaclass=ABCMeta):
     def __init__(self):
+        # Using a buffer to store and pass through the tubes accordingly
         self.buf = b''
 
     @abstractmethod
@@ -199,6 +200,7 @@ class Tube(metaclass=ABCMeta):
                         go.set()
                         log.info('Got EOF while sending in interactive')
                 else:
+                    log.info("Got EOF while reading in interactive")
                     go.set()
         except KeyboardInterrupt:
             log.info('Interrupted')

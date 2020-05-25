@@ -1,5 +1,5 @@
 import binascii
-
+from roppy.log import log
 
 def checkstr(strings):
     try:
@@ -16,6 +16,12 @@ def bytes2str(data):
     return data
 
 def pause():
-    input("Paused [Press any key to continue]")
+    """
+    This allows you to pause the program and then attach it to debugger.
+    Note: There is a bug that it only attachs to `gdb` if it is spawned by the root 
+    itself.
+    """
+    log.info("Paused [Press any key to continue]")
+    input('')
     return
 

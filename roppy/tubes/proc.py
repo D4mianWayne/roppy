@@ -1,5 +1,6 @@
 import logging
-from .tube import *
+import ctypes
+from roppy.tubes.tube import *
 import errno
 import select
 import fcntl
@@ -15,10 +16,47 @@ STDOUT = subprocess.STDOUT
 PTY = object()
 
 class process(Tube):
+    """
+    Spawns a process and use the `roppy.tubes.tube` to interact
+    with it effectively. 
+    You can spawn the process by calling `roppy.tube.proc.process`
+    
+    For Example:
+
+        Python 3.8.2 (default, Apr 27 2020, 15:53:34) 
+        [GCC 9.3.0] on linux
+        Type "help", "copyright", "credits" or "license" for more information.
+        >>> from roppy import *
+        >>> p = process("/bin/bash")
+        [*] Successfully started process. PID - 5069
+        >>> p.sendline("echo Hello World")
+        >>> p.recvline()
+        b'Hello World'
+        >>> p.sendline("id")
+        >>> p.recv(10)
+        b'uid=1000(r'
+        >>> p.recvuntil(")")
+        b'obin)'
+        >>> p.interactive()
+        [*] Switching to Interactive mode.
+        gid=1000(robin) groups=1000(robin),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),120(lpadmin),131(lxd),132(sambashare)
+        $ id
+        uid=1000(robin) gid=1000(robin) groups=1000(robin),4(adm),24(cdrom),27(sudo),30(dip),46(plugdev),120(lpadmin),131(lxd),132(sambashare)
+        $ ls
+        build         
+        CONTRIBUTING.md  examples  README.md  roppy.egg-info
+        CODE_OF_CONDUCT.md  dist   LICENSE   roppy    setup.py
+        $ exit
+        [*] Got EOF while reading in interactive
+        $ 
+        >>> p.close()
+        [*] close: '/bin/bash' killed
+
+    """
 
     PTY = PTY
 
-    def __init__(self, args, env=None, cwd=None, timeout=None, stdin=PIPE, stdout=PTY, stderr=STDOUT, raw= True, closed_fds=True):
+    def __init__(self, args, env=None, cwd=None, timeout=None, stdin=PIPE, stdout=PTY, stderr=STDOUT, preexec_fn = lambda: None, raw= True, closed_fds=True):
         """
         Create a process instance and pipe 
         it for `Tube`
@@ -40,7 +78,8 @@ class process(Tube):
         self.raw          = raw
         self.reservoir    = b''
         self.temp_timeout = None
-        self.proc = None
+        self.proc         = None
+        self.preexec_fn   = preexec_fn
 
         if stderr is STDOUT:
             stderr = stdout
@@ -59,6 +98,7 @@ class process(Tube):
                 stdout = stdout,
                 stdin  = stdin,
                 stderr = stderr,
+                preexec_fn = self.__preexec_fn
             )
         
         except FileNotFoundError:
@@ -81,6 +121,23 @@ class process(Tube):
         fl = fcntl.fcntl(fd, fcntl.F_GETFL)
         fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
         log.info("Successfully started process. PID - {}".format(self.proc.pid))
+
+    def __preexec_fn(self):
+        """
+        If not executed before the child process get spawned
+        `gdb` won't be able to attach the process unless you're 
+        root, this can be fixed by calling the `prctl` and setting
+        it to 0
+        """
+        try:
+            PR_SET_PTRACER = 0x59616d61
+            PR_SET_PTRACER_ANY = -1
+            ctypes.CDLL('libc.so.6').prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY, 0, 0, 0)
+        except Exception:
+            pass
+
+        self.preexec_fn()
+
     
     def _handles(self, stdin, stdout, stderr):
         master = slave = None
@@ -90,7 +147,7 @@ class process(Tube):
             # Unfortunately, this results in undesired behavior when
             # printf() and similar functions buffer data instead of
             # sending it directly.
-            #
+            # 
             # By opening a PTY for STDOUT, the libc routines will not
             # buffer any data on STDOUT.
             master, slave = pty.openpty()
@@ -99,8 +156,7 @@ class process(Tube):
                 # By giving the child process a controlling TTY,
                 # the OS will attempt to interpret terminal control codes
                 # like backspace and Ctrl+C.
-                #
-                # If we don't want this, we set it to raw mode.
+                # Apparently, with raw mode enabled we can map the key press code and work accordingly.
                 tty.setraw(master)
                 tty.setraw(slave)
 
@@ -115,6 +171,7 @@ class process(Tube):
 
 
     def _settimeout(self, timeout):
+        # Setup the timeout
         if timeout is None:
             self.temp_timeout = self.timeout
         else:
@@ -124,6 +181,8 @@ class process(Tube):
         return self.proc
 
     def _poll(self):
+        # Perform polling on running process to
+        # see if it's alive or not
         if self.proc is None:
             return False
 

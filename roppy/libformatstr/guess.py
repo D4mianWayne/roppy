@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 
-from .pattern import *
+from roppy.libformatstr.pattern import *
 import sys
 
 def guess_argnum(result, buffer_size, start_index=1):
