@@ -4,6 +4,7 @@ from elftools.elf.relocation import RelocationSection
 from elftools.elf.constants import SHN_INDICES
 import os
 from roppy.log import log
+from roppy.misc import str2bytes, bytes2str
 import mmap
 
 class dotdict(dict):
@@ -161,7 +162,7 @@ class ELF(ELFFile):
 
     def section(self, name=None):
         """ Returns the section address """
-        if self.pie and not self.base:
+        if self._pie and not self.base:
             log.warn('ELF : Base address not set')
             
         if name is None:

@@ -2,6 +2,8 @@
 #-*- coding:utf-8 -*-
 
 from roppy.libformatstr.pattern import *
+from roppy.misc import bytes2str, str2bytes
+from binascii import unhexlify
 import sys
 
 def guess_argnum(result, buffer_size, start_index=1):
@@ -17,7 +19,8 @@ def guess_argnum(result, buffer_size, start_index=1):
 
     parts = result.split("0x")[1:]
     for i, p in enumerate(parts):
-        p = p.rjust(8, "0").decode("hex")[::-1]
+        p = unhexlify(p.rjust(8, "0").encode("latin"))[::-1]
+        p = bytes2str(p) 
         if p in pat:
             block_index = pat.find(p)
             padding = block_index % 4

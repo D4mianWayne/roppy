@@ -1,4 +1,5 @@
 from roppy.misc.utils import *
+from roppy.log import *
 
 def de_bruijn(k, n: int) -> str:
     """
@@ -39,24 +40,24 @@ def generate_cyclic(size, wordsize):
     return res.decode("utf-8")
 
 
-def offset(pattern, wordsize, endian):
+def offset(pattern, wordsize):
     pattern = checkstr(pattern)
-    print("[*] Searching for {}".format(pattern))
+    log.info("[*] Searching for {}".format(pattern))
     """ Maximum size is 20230 """
     cyclic = generate_cyclic(20230, wordsize)
     found = False
     """ Little Endian Search of pattern """
     little_endian = cyclic.find(pattern[::-1])
     if little_endian >= 0:
-        print("[+] Found buffer offset at {} [Little Endian]".format(little_endian))
+        log.info("[+] Found buffer offset at {} [Little Endian]".format(little_endian))
         found = True
         return little_endian
     """ Big Endian Search of pattern """
     big_endian = cyclic.find(pattern)
     if big_endian >= 0:
-        print("[+] Found buffer offset at {} [Big Endian]".format(big_endian))
+        log.info("[+] Found buffer offset at {} [Big Endian]".format(big_endian))
         found = True
         return big_endian
     if not found:
-        print("Not found!")
+        log.error("Not found!")
         return 0 

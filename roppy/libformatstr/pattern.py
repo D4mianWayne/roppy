@@ -22,7 +22,7 @@ def msfpattern(n):
             inc(alphas, indexes, i)
     return "".join(chars)
 
-def make_pattern(buffer_size, start_index=1, max_index=500):
+def fmt_cylic(buffer_size, start_index=1, max_index=500):
     format_size = buffer_size // 2
     pattern_size = buffer_size // 8 
     

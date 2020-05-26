@@ -22,16 +22,14 @@ class Color:
 class ColoredFormatter(logging.Formatter):
     def format(self, record):
         prefix = ''
-        if record.levelno == 15:
-            prefix = '{bold}{green}[+]{end} '.format(bold=Color.BOLD, green=Color.GREEN, end=Color.END)
         if record.levelno == INFO:
             prefix = '{bold}{green}[+]{end} '.format(bold=Color.BOLD, green=Color.BLUE, end=Color.END)
         if record.levelno == WARNING:
             prefix = '{bold}{red}[WARN]{end} '.format(bold=Color.BOLD, red=Color.WHITE, end=Color.END)
         elif record.levelno >= ERROR:
-            prefix = '{bold}{yellow}[-]{end} '.format(bold=Color.BOLD, yellow=Color.YELLOW, end=Color.END)
+            prefix = '{bold}{yellow}[ERROR]{end} '.format(bold=Color.BOLD, yellow=Color.YELLOW, end=Color.END)
         else:
-            prefix = '{bold}[+]{end} '.format(bold=Color.BOLD, end=Color.END)
+            prefix = '{bold}{blue}[*]{end} '.format(bold=Color.BOLD,blue=Color.BLUE, end=Color.END)
 
         return prefix +  super(ColoredFormatter, self).format(record)
 
@@ -39,5 +37,5 @@ class ColoredFormatter(logging.Formatter):
 handler = logging.StreamHandler()
 handler.setFormatter(ColoredFormatter("%(message)s"))
 log = logging.getLogger(__name__)
-log.setLevel(0)
+log.setLevel(INFO)
 log.addHandler(handler)
