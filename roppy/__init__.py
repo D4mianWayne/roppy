@@ -1,7 +1,7 @@
-from roppy.asm import *
-from roppy.misc import *
-from roppy.loaders import *
-from roppy.tubes import *
-from roppy.libformatstr import *
-from roppy.rop import *
-from roppy.shellcode.shellcode import *
+# Promote useful stuff to toplevel
+from .toplevel import *
+
+roppylib.args.initialize()
+roppylib.log.install_default_handler()
+
+log = roppylib.log.getLogger('roppylib')

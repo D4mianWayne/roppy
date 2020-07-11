@@ -1,9 +1,9 @@
-from roppy.misc.utils import str2bytes
-from roppy.log import log
+from roppylib.misc.utils import str2bytes
+from roppylib.log import getLogger
 from keystone import *
 from capstone import *
 
-
+log = getLogger(__name__)
 cmd = {
        
        'i386': {

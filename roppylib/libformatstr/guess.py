@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 #-*- coding:utf-8 -*-
 
-from roppy.libformatstr.pattern import *
-from roppy.misc import bytes2str, str2bytes
+from roppylib.libformatstr.pattern import *
+from roppylib.misc import bytes2str, str2bytes
 from binascii import unhexlify
 import sys
 

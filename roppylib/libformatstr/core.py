@@ -3,8 +3,10 @@
 import sys
 import operator
 from collections import OrderedDict
-from roppy.misc.packing import *
-from roppy.log import log
+from roppylib.misc.packing import *
+from roppylib.log import getLogger
+
+log = getLogger(__name__)
 
 
 # INPUT for setitem:

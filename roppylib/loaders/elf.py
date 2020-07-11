@@ -3,9 +3,12 @@ from elftools.elf.sections import SymbolTableSection
 from elftools.elf.relocation import RelocationSection
 from elftools.elf.constants import SHN_INDICES
 import os
-from roppy.log import log
-from roppy.misc import str2bytes, bytes2str
+from roppylib.log import getLogger
+from roppylib.misc import str2bytes, bytes2str
 import mmap
+
+
+log = getLogger(__name__)
 
 class dotdict(dict):
     def __getattr__(self, name):
