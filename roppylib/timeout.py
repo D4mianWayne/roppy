@@ -5,7 +5,7 @@ Timeout encapsulation, complete with countdowns and scope managers.
 """
 import time
 
-import pwnlib
+import roppylib
 
 
 class _DummyContextClass:
@@ -158,7 +158,7 @@ class Timeout:
 
     def _get_timeout_seconds(self, value):
         if value is self.default:
-            value = pwnlib.context.context.timeout
+            value = roppylib.context.context.timeout
 
         elif value is self.forever:
             value = self.maximum
