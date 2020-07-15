@@ -22,7 +22,7 @@ term_mode = False
 def can_init():
     """This function returns True iff stdout is a TTY and we are not inside a
     REPL.  Iff this function returns `True`, a call to :meth:`init` will let
-    ``pwnlib`` manage the terminal.
+    ``roppy`` manage the terminal.
     """
 
     if not sys.stdout.isatty():

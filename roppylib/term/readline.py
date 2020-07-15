@@ -450,7 +450,6 @@ def init():
     def input(prompt='', float=True):
         """input(prompt='', float=True)
 
-        Replacement for the built-in `input` using ``pwnlib``s readline
         implementation.
 
         Arguments:

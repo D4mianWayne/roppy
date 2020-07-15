@@ -95,20 +95,6 @@ class DictStack:
 
 
 class _TlsDictStack(threading.local, DictStack):
-    """
-    Per-thread implementation of :class:`DictStack`.
-
-    Examples:
-
-        >>> t = pwnlib.context._TlsDictStack({})
-        >>> t['key'] = 'value'
-        >>> print(t)
-        {'key': 'value'}
-        >>> def p(): print(t)
-        >>> thread = threading.Thread(target=p)
-        >>> _ = (thread.start(), thread.join())
-        {}
-    """
     pass
 
 
@@ -165,60 +151,7 @@ class TlsProperty:
 
 
 class ContextType:
-    r"""
-    Class for specifying information about the target machine.
-    Intended for use as a pseudo-singleton through the global
-    variable ``pwnlib.context.context``, available via
-    ``from pwn import *`` as ``context``.
 
-    The context is usually specified at the top of the Python file for clarity. ::
-
-        #!/usr/bin/env python3
-        context.update(arch='i386', os='linux')
-
-    Currently supported properties and their defaults are listed below.
-    The defaults are inherited from :data:`pwnlib.context.ContextType.defaults`.
-
-    Additionally, the context is thread-aware when using
-    :class:`pwnlib.context.Thread` instead of :class:`threading.Thread`
-    (all internal ``pwntools`` threads use the former).
-
-    The context is also scope-aware by using the ``with`` keyword.
-
-    Examples:
-
-        >>> context.clear()
-        >>> context.update(os='linux') # doctest: +ELLIPSIS
-        >>> context.os == 'linux'
-        True
-        >>> context.arch = 'arm'
-        >>> vars(context) == {'arch': 'arm', 'bits': 32, 'endian': 'little', 'os': 'linux'}
-        True
-        >>> context.endian
-        'little'
-        >>> context.bits
-        32
-        >>> def nop():
-        ...   print(enhex(pwnlib.asm.asm('nop')))
-        >>> nop()
-        00f020e3
-        >>> with context.local(arch = 'i386'):
-        ...   nop()
-        90
-        >>> from pwnlib.context import Thread as PwnThread
-        >>> from threading import Thread as NormalThread
-        >>> with context.local(arch = 'mips'):
-        ...     pwnthread = PwnThread(target=nop)
-        ...     thread = NormalThread(target=nop)
-        >>> # Normal thread uses the default value for arch, 'i386'
-        >>> _ = (thread.start(), thread.join())
-        90
-        >>> # Pwnthread uses the correct context from creation-time
-        >>> _ = (pwnthread.start(), pwnthread.join())
-        00000000
-        >>> nop()
-        00f020e3
-    """
 
     #
     # Use of 'slots' is a heavy-handed way to prevent accidents
@@ -229,7 +162,6 @@ class ContextType:
     #
     __slots__ = '_tls',
 
-    #: Default values for :class:`pwnlib.context.ContextType`
     defaults = {
         'arch': 'amd64',
         'aslr': True,
@@ -243,8 +175,7 @@ class ContextType:
         'timeout': Timeout.maximum,
     }
 
-    #: Valid values for :meth:`pwnlib.context.ContextType.os`
-    oses = sorted(('linux', 'freebsd', 'windows', 'cgc', 'android'))
+    oses = sorted(('linux'))
 
     big_32 = {'endian': 'big', 'bits': 32}
     big_64 = {'endian': 'big', 'bits': 64}
@@ -253,10 +184,7 @@ class ContextType:
     little_32 = {'endian': 'little', 'bits': 32}
     little_64 = {'endian': 'little', 'bits': 64}
 
-    #: Keys are valid values for :meth:`pwnlib.context.ContextType.arch`.
-    #
-    #: Values are defaults which are set when
-    #: :attr:`pwnlib.context.ContextType.arch` is set
+ 
     architectures = _longest({
         'amd64': little_64,
         'i386': little_32,
@@ -516,28 +444,9 @@ class ContextType:
 
         return Timeout(value).timeout
 
-    #*************************************************************************
-    #                               ALIASES
-    #*************************************************************************
-    #
-    # These fields are aliases for fields defined above, either for
-    # convenience or compatibility.
-    #
-    #*************************************************************************
-
-
-
-
     Thread = threading.Thread
 
 
-#: Global ``context`` object, used to store commonly-used pwntools settings.
-#: In most cases, the context is used to infer default variables values.
-#: For example, :meth:`pwnlib.asm.asm` can take an ``os`` parameter as a
-#: keyword argument.  If it is not supplied, the ``os`` specified by
-#: ``context`` is used instead.
-#: Consider it a shorthand to passing ``os=`` and ``arch=`` to every single
-#: function call.
 context = ContextType()
 
 

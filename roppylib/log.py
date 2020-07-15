@@ -116,10 +116,7 @@ class Logger:
 
     def __init__(self, logger=None):
         if logger is None:
-            # This is a minor hack to permit user-defined classes which inherit
-            # from a tube (which do not actually reside in the pwnlib library)
-            # to receive logging abilities that behave as they would expect from
-            # the resto f the library
+
             module = self.__module__
             if not module.startswith('roppylib'):
                 module = 'roppylib.' + module
@@ -189,8 +186,6 @@ class Logger:
         self._log(logging.INFO, message, args, kwargs, 'info')
 
     def hexdump(self, message, *args, **kwargs):
-        # cyclic dependencies FTW!
-        # TODO: Move pwnlib.util.fiddling.hexdump into a new module.
         import roppylib.misc.utils
 
         self.info(roppylib.misc.utils.hexdump(message, *args, **kwargs))
@@ -211,7 +206,7 @@ class Logger:
 
         To be called outside an exception handler.
 
-        Logs an error message, then raises a ``PwnlibException``.
+        Logs an error message, then raises a ``RoplibException``.
         """
         self._log(logging.ERROR, message, args, kwargs, 'error')
         raise RoplibException(message % args)
