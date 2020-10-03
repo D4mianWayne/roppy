@@ -220,8 +220,8 @@ class Logger:
         """
         kwargs["exc_info"] = 1
         self._log(logging.ERROR, message, args, kwargs, 'exception')
-        raise
-
+        raise RoplibException(message)
+ 
     def critical(self, message, *args, **kwargs):
         """critical(message, *args, **kwargs)
 

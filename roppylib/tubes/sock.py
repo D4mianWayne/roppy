@@ -2,7 +2,7 @@ import errno
 import select
 import socket
 
-from .tube import tube
+from roppylib.tubes.tube import tube
 
 
 class sock(tube):

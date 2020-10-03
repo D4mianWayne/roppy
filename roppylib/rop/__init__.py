@@ -1,1 +1,1 @@
-from .srop import SigreturnFrame
+from roppylib.rop.srop import SigreturnFrame

@@ -46,9 +46,6 @@ def set_log_level(x):
         context.defaults['log_level'] = context.log_level
 
 
-def set_log_file(x):
-    context.log_file = x
-
 
 def set_log_level_error(x):
     set_log_level('error')
@@ -81,7 +78,6 @@ def set_noptrace(v):
 
 hooks = {
     'LOG_LEVEL': set_log_level,
-    'LOG_FILE': set_log_file,
     'DEBUG': set_log_level_debug,
     'NOTERM': set_noterm,
     'SILENT': set_log_level_error,
@@ -105,7 +101,6 @@ def initialize():
         elif isident(k):
             args[k] = v
 
-    argv = sys.argv[:]
     for arg in sys.argv[:]:
         orig = arg
         value = 'True'

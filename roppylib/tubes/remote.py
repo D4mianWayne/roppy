@@ -1,9 +1,9 @@
 import socket
 import ssl as _ssl
 
-from ..log import getLogger
-from ..timeout import Timeout
-from .sock import sock
+from roppylib.log import getLogger
+from roppylib.timeout import Timeout
+from roppylib.tubes.sock import sock
 
 log = getLogger(__name__)
 

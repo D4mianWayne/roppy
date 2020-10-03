@@ -12,8 +12,8 @@ from roppylib import term
 from roppylib.context import context
 from roppylib.log import Logger
 from roppylib.timeout import Timeout
-from roppylib.misc.utils import hexdump
-from roppylib.util import misc
+from roppylib.util.misc import hexdump
+from roppylib.util.misc import tobytes
 from roppylib.tubes.buffer import Buffer
 
 
@@ -285,7 +285,7 @@ class tube(Timeout, Logger):
             delims = (delims,)
 
         # Make sure all items are bytes
-        delims = list(map(misc.force_bytes, delims))
+        delims = list(map(tobytes, delims))
 
         # Longest delimiter for tracking purposes
         longest = max(map(len, delims))
@@ -407,7 +407,7 @@ class tube(Timeout, Logger):
             >>> t.send('hello')
             b'hello'
         """
-        data = misc.force_bytes(data)
+        data = tobytes(data)
 
         if self.isEnabledFor(logging.DEBUG):
             self.debug('Sent %#x bytes:' % len(data))
@@ -437,7 +437,7 @@ class tube(Timeout, Logger):
             >>> t.sendline('hello')
             b'hello\r\n'
         """
-        self.send(misc.force_bytes(line) + self.newline)
+        self.send(tobytes(line) + self.newline)
 
     def sendlines(self, lines=[]):
         for line in lines:

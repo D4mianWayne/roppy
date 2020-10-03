@@ -2,7 +2,7 @@ import functools
 import sys
 import types
 
-from . import termcap
+from roppylib.term import termcap
 
 
 def eval_when(when):

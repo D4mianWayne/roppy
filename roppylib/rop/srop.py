@@ -1,4 +1,6 @@
 import struct
+from roppylib.util.packing import p64, p32, p16
+from roppylib.context import context
 
 registers_32 = ["gs",   "fs",  "es",  "ds",   "edi",  "esi", "ebp", "esp", "ebx",
              "edx",  "ecx", "eax", "JUNK", "JUNK", "eip", "cs",  "eflags",
@@ -54,7 +56,7 @@ class SigreturnFrame(object):
           b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00 @\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00;\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x1b\x10@\x00s\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00{\x00\x00\x00\x00\x00\x00\x00'
 
     """
-    def __init__(self, arch="x86"):
+    def __init__(self, arch=context.arch):
         self.arch  = arch
         self.frame = []
         self.initialize_vals()
@@ -74,12 +76,12 @@ class SigreturnFrame(object):
 
     def _set_regvalue_x64(self, reg, val):
         index = reg_pos_mapping_x64[reg]
-        value = struct.pack("<Q", val)
+        value = p64(val)
         self.frame[index] = value
 
     def _initialize_x86(self):
         for i in range(len(registers_32)):
-            self.frame.append(struct.pack("<I", 0x0))
+            self.frame.append(p32(0x0))
         self.set_regvalue("cs", 0x73)
         self.set_regvalue("ss", 0x7b)
 
@@ -91,9 +93,9 @@ class SigreturnFrame(object):
 
     def _set_regvalue_x86(self, reg, val):
         index = reg_pos_mapping_x86[reg]
-        value = struct.pack("<I", val)
+        value = p32(val)
         if reg == "ss":
-            value = struct.pack("<h", val) + b"\x00\x00"
+            value = p16(val) + b"\x00\x00"
         self.frame[index] = value
 
     def get_frame(self):

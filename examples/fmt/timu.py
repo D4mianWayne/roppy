@@ -19,9 +19,8 @@ def delete(idx):
     p.sendlineafter(": ", str(idx))
 
 
-p = remote("220.249.52.133", 41739)
-#p = process("./timu")
-#elf = ELF("timu")
+p = process("./timu")
+elf = ELF("timu")
 
 bss = 0x601040
     

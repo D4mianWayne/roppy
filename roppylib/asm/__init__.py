@@ -1,1 +1,1 @@
-from .assembler import *
+from roppylib.asm.assembler import asm, disasm

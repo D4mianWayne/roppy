@@ -1,5 +1,8 @@
-from roppylib.misc.utils import *
-from roppylib.log import *
+from roppylib.util.misc import checkstr
+from roppylib.context import context
+from roppylib.log import getLogger
+
+log = getLogger(__name__)
 
 def de_bruijn(k, n: int) -> str:
     """
@@ -10,7 +13,6 @@ def de_bruijn(k, n: int) -> str:
     k = len(k)
 
     a = [0] * k * n
-    sequence = []
 
     def db(t, p):
         if t > n:
@@ -30,7 +32,7 @@ def de_bruijn(k, n: int) -> str:
 
 
 
-def cyclic(size, wordsize):
+def cyclic(size, wordsize=context.bytes):
     charset = bytearray(b"abcdefghijklmnopqrstuvwxyz")
     res = bytearray()
     for length, char in enumerate(de_bruijn(charset, wordsize)):
@@ -40,23 +42,30 @@ def cyclic(size, wordsize):
     return res
 
 
-def offset(pattern, wordsize):
+def offset(pattern, wordsize=context.bytes):
     pattern = checkstr(pattern)
     log.info("Searching for {}".format(pattern))
+
     """ Maximum size is 20230 """
+    
     buffer = cyclic(20230, wordsize)
     found = False
+
     """ Little Endian Search of pattern """
     little_endian = buffer.find(pattern[::-1])
+    
     if little_endian >= 0:
         log.info("Found buffer offset at {} [Little Endian]".format(little_endian))
         found = True
         return little_endian
+    
     """ Big Endian Search of pattern """
     big_endian = buffer.find(pattern)
+    
     if big_endian >= 0:
         log.info("Found buffer offset at {} [Big Endian]".format(big_endian))
         found = True
         return big_endian
+    
     if not found:
         log.error("Not found!")

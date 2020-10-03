@@ -9,12 +9,12 @@ import select
 import subprocess
 import tty
 
-from ..context import context
-from ..log import getLogger
-from ..timeout import Timeout
-from ..util.misc import which
-from ..util.misc import parse_ldd_output
-from .tube import tube
+from roppylib.context import context
+from roppylib.log import getLogger
+from roppylib.timeout import Timeout
+from roppylib.util.misc import which
+from roppylib.util.misc import parse_ldd_output
+from roppylib.tubes.tube import tube
 
 log = getLogger(__name__)
 
@@ -120,6 +120,7 @@ class process(tube):
                                                  stderr=stderr,
                                                  close_fds=close_fds,
                                                  preexec_fn=self._preexec_fn)
+                    p.success("PID %d" %(self.proc.pid))
                     break
                 except OSError as e:
                     exception = e
@@ -186,6 +187,13 @@ class process(tube):
                 pass
 
         self.preexec_fn()
+
+        try:
+            PR_SET_PTRACER = 0x59616d61
+            PR_SET_PTRACER_ANY = -1
+            ctypes.CDLL('libc.so.6').prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY, 0, 0, 0)
+        except Exception:
+            pass
 
     @property
     def program(self):

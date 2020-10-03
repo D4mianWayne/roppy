@@ -14,7 +14,8 @@ __all__ = [
     'term',
     'tubes',
     'util',
-    'args'
+    'args',
+    'one_gadget'
 ]
 
 for module in __all__:

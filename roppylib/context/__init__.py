@@ -16,7 +16,7 @@ import sys
 import threading
 import time
 
-from ..timeout import Timeout
+from roppylib.timeout import Timeout
 
 _original_socket = socket.socket
 

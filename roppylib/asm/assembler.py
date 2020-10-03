@@ -1,7 +1,8 @@
-from roppylib.misc.utils import str2bytes
+from roppylib.util.misc import tobytes
 from roppylib.log import getLogger
-from keystone import *
-from capstone import *
+from roppylib.context import context
+from keystone import Ks, KS_ARCH_X86, KS_MODE_32, KS_MODE_64
+from capstone import Cs, CS_ARCH_X86, CS_MODE_32, CS_MODE_64
 
 log = getLogger(__name__)
 cmd = {
@@ -17,7 +18,7 @@ cmd = {
         }
     }
 
-def assemble(s, arch):
+def asm(s, arch=None):
     """
     Assemble a string of opcode of given architecture
     Example:
@@ -83,16 +84,18 @@ def assemble(s, arch):
            0x4019:	syscall	
            >>> 
     """
+    if not arch:
+        arch = context.arch
     if arch in cmd:
         assembler = cmd[arch]["asm"]
     else:
         raise Exception("unsupported architecture: %r" % arch)
 
     if isinstance(s, str):
-        s = str2bytes(s)
+        s = tobytes(s)
 
     try:
-        encoding, count = assembler.asm(s)
+        encoding, _ = assembler.asm(s)
     except Exception as E:
         log.error(E)
     res = b""
@@ -104,7 +107,9 @@ def assemble(s, arch):
 
 
 
-def disasm(blob, arch, vma=0x0):
+def disasm(blob, arch=None, vma=0x0):
+    if not arch:
+        arch = context.arch
     if arch in cmd:
         md = cmd[arch]["disasm"]
     else:

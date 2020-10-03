@@ -4,9 +4,9 @@ from elftools.elf.relocation import RelocationSection
 from elftools.elf.constants import SHN_INDICES
 import os
 from roppylib.log import getLogger
-from roppylib.misc import str2bytes, bytes2str
+from roppylib.util.misc import tobytes, parse_ldd_output
 import mmap
-
+from subprocess import check_output
 
 log = getLogger(__name__)
 
@@ -37,7 +37,7 @@ class ELF(ELFFile):
         the information about of the sections, plt,
         got and function addresses
         """
-        log.info("Analyzing {}".format(self.path))
+        log.info("ELF: {}".format(self.path))
 
         self._pie    = 'DYN' in self.header.e_type
         self.arch   = self.get_machine_arch().lower()
@@ -48,10 +48,10 @@ class ELF(ELFFile):
         else:
             self.base = min(filter(bool, (s.header.p_vaddr for s in self.iter_segments())))
         
-        self.__section                  = self.init_sections()
-        self.__got                      = self.init_got()
-        self.__plt                      = self.init_plt()
-        self.__symbol, self.__function  = self.init_symbols()
+        self.section                  = self.init_sections()
+        self.got                      = self.init_got()
+        self.plt                      = self.init_plt()
+        self.symbols                  = self.init_symbols()
 
     def init_sections(self):
         """ Initializing sections of the ELF file """
@@ -96,15 +96,10 @@ class ELF(ELFFile):
         addr_plt = self.get_section_by_name('.plt')
         if self.arch in ('x86','x64','amd64','80386','x86-64'):
             header_size, entry_size = 0x10, 0x10
-
-        '''
-        sec_plt     = self.elf.get_section_by_name('.plt')
-        plt = {u'resolve' : sec_plt.header.sh_addr}
-        addr_plt_entry = sec_plt.header.sh_addr + header_size
-        '''
+            
         plt = {}
         for i, (addr, name) in enumerate(sorted((addr, name)
-                                                for name, addr in self.__got.items())):
+                                                for name, addr in self.got.items())):
             plt[name] = addr_plt.header.sh_addr + header_size + i * entry_size
 
         return plt
@@ -113,7 +108,6 @@ class ELF(ELFFile):
     def init_symbols(self):
         """ Initializing the symbols from the ELF file """
         symbol      = dict()
-        function    = dict()
 
         for sec in self.__list_sections:
             if not isinstance(sec, SymbolTableSection):
@@ -121,12 +115,9 @@ class ELF(ELFFile):
             
             for sym in sec.iter_symbols():
                 if sym.entry.st_value:
-                    if sym.entry.st_info['type'] == 'STT_FUNC':
-                        function[sym.name]  = sym.entry.st_value
-                    else:
-                        symbol[sym.name]    = sym.entry.st_value
+                    symbol[sym.name]    = sym.entry.st_value
 
-        return symbol, function
+        return symbol
 
 
     @property
@@ -140,11 +131,10 @@ class ELF(ELFFile):
         delta = new - self.base
         update = lambda x: x + delta
 
-        self.__symbol = dotdict({k: update(v) for k, v in self.__symbol.items()})
-        self.__function = dotdict({k: update(v) for k, v in self.__function.items()})
-        self.__plt = dotdict({k: update(v) for k, v in self.__plt.items()})
-        self.__got = dotdict({k: update(v) for k, v in self.__got.items()})
-        self.__section = dotdict({k: update(v) for k, v in self.__section.items()})
+        self.symbols = dotdict({k: update(v) for k, v in self.symbols.items()})
+        self.plt = dotdict({k: update(v) for k, v in self.plt.items()})
+        self.got = dotdict({k: update(v) for k, v in self.got.items()})
+        self.section = dotdict({k: update(v) for k, v in self.section.items()})
 
         self.base = update(self.address)
     
@@ -162,56 +152,14 @@ class ELF(ELFFile):
 
             
         return None
-
-    def section(self, name=None):
-        """ Returns the section address """
-        if self._pie and not self.base:
-            log.warn('ELF : Base address not set')
-            
-        if name is None:
-            return self.__section
-        elif name not in self.__section:
-            log.error('ELF : section "%s" not found' % name)
-            return None
-        
-        return self.__section[name]
-
-    def plt(self, name=None):
-        """ Returns the PLT address """
-        if name is None:
-            return self.__plt
-        elif name not in self.__plt:
-            log.error('ELF : plt "%s" not found' % name)
-            return None
-        
-        return self.__plt[name]
-
-    def got(self, name=None):
-        """ Returns the GOT address """
-        if name is None:
-            return self.__got
-        elif name not in self.__got:
-            log.error('ELF : got "%s" not found' % name)
-            return None
-        
-        return self.__got[name]
     
-    def function(self, name=None):
-        """ Returns the function address """
-        if name is None:
-            return self.__function
-        elif name not in self.__function:
-            log.error('ELF : function "%s" not found' % name)
-            return None
-        
-        return self.__function[name]
-
-    def symbol(self, name=None):
-        """ Returns the symbol address """
-        if name is None:
-            return self.__symbol
-        elif name not in self.__symbol:
-            log.error('ELF : symbol "%s" not found' % name)
-            return None
-        
-        return self.__symbol[name]
+    def bss(self, offset):
+        bss = self.get_section_by_name(".bss")
+        return bss + offset
+    
+    @property
+    def libc(self):
+        results = parse_ldd_output(check_output(["ldd", self.path]))
+        for lib in results:
+            if "libc.so.6" in lib:
+                return ELF(lib)

@@ -1,9 +1,6 @@
 
 from roppy import *
 
-#sh = ssh(host="10.1.1.146",user="pwnsec",password="pwnsausage")
-#sh.set_working_directory("/home/pwnsec/Desktop")
-
 p = process('./buf')
 
 addr = int(p.recvline().split(b': ')[1].strip(b'\n'), 16) 

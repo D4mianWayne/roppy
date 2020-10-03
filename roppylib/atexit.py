@@ -13,7 +13,7 @@ import threading
 import traceback
 import atexit as _atexit
 
-from .context import context
+from roppylib.context import context
 
 __all__ = ['register', 'unregister']
 

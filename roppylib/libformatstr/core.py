@@ -3,7 +3,7 @@
 import sys
 import operator
 from collections import OrderedDict
-from roppylib.misc.packing import *
+from roppylib.util.packing import p64, u64, p32, u32
 from roppylib.log import getLogger
 
 log = getLogger(__name__)
