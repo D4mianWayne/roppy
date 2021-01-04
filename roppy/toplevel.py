@@ -27,9 +27,9 @@ from roppylib.term import *
 from roppylib.rop.srop import SigreturnFrame
 from roppylib.timeout import Timeout
 from roppylib.libformatstr import *
-from roppylib.misc.pattern import *
+from roppylib.util.pattern import *
 from roppylib.tubes.process import process
 from roppylib.tubes.remote import remote, tcp, udp
 from roppylib.tubes.tube import tube
-from roppylib.misc.utils import *
-from roppylib.misc.packing import *
+from roppylib.util.misc import *
+from roppylib.util.packing import *

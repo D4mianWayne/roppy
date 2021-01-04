@@ -1,6 +1,6 @@
-from roppylib.util.misc import checkstr
 from roppylib.context import context
 from roppylib.log import getLogger
+import binascii 
 
 log = getLogger(__name__)
 
@@ -41,6 +41,14 @@ def cyclic(size, wordsize=context.bytes):
             break
     return res
 
+def checkstr(string):
+    if isinstance(string, int):
+        if str(string).startswith("0x"):
+            return binascii.unhexlify(string[1:])
+        else:
+            return binascii.unhexlify(string)
+    else:
+        return string
 
 def offset(pattern, wordsize=context.bytes):
     pattern = checkstr(pattern)

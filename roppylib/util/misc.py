@@ -197,7 +197,7 @@ def mkdir_p(path):
         else:
             raise
 
-def stringtohex(strings):
+def checkstr(strings):
     try:
         return binascii.unhexlify(strings[2:]).decode("utf-8")
     except:
