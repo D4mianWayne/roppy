@@ -10,7 +10,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='roppy',
-    version='Beta',
+    version='0.1',
     description='Pwning Toolkit',
     long_description=long_description,
     long_description_content_type='text/markdown',
