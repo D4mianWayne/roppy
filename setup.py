@@ -1,29 +1,9 @@
 #!/usr/bin/env python
-from setuptools import setup, find_packages
-from os import path
-from io import open
+"""
+Minimal setup.py for backward compatibility.
+Configuration has moved to pyproject.toml.
+"""
+from setuptools import setup
 
-here = path.abspath(path.dirname(__file__))
-
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
-
-setup(
-    name='roppy',
-    version='0.1',
-    description='Pwning Toolkit',
-    long_description=long_description,
-    long_description_content_type='text/markdown',
-    url='https://github.com/D4mianWayne/roppy',
-    author='D4mianWayne',
-    author_email='dubeyayushmanrobin@gmail.com',
-    keywords='pwn rop fmtstr',
-    packages=find_packages(exclude=['examples']),
-    python_requires='!=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, <4',
-    install_requires=['pyelftools', 'requests', 'capstone', 'keystone-engine'],
-    entry_points={  # Optional
-        'console_scripts': [
-            'roppy=roppy.__init__:main',
-        ],
-    },
-)
+if __name__ == "__main__":
+    setup()

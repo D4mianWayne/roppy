@@ -31,12 +31,10 @@ class Tube(metaclass=ABCMeta):
         Returns:
             bytes: The received data
         """
-        if size > len(self.bufsize):
+        if size > len(self.buf):
             self.buf += self._recv(size, timeout)
-        print(b"self.buf:        "+self.buf)
 
         data, self.buf = self.buf[:size], self.buf[size:]
-        print("wtf")
         return data
 
     def recvonce(self, size, timeout):
